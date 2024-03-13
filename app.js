@@ -1,24 +1,32 @@
+const cors = require("cors");
 const express = require("express");
+const logger = require("morgan");
+
+const transactionsRouter = require("./routes/api/transactions");
+
 require("dotenv").config();
-require("colors");
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.get("/", (_, res) => {
-  res.send("Server is running");
-});
+const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 
-app.listen(port, () => {
-  console.log(`Server running. Use our API on port: ${port}`.green);
-});
+app.use(logger(formatsLogger));
+app.use(cors());
+app.use(express.json());
+app.use(express.static("public"));
 
-app.use((_, res) => {
-  res.status(404).json({ message: "Not found".red });
+app.use("/api/transactions", transactionsRouter);
+
+app.use((_, res, __) => {
+  res.status(404).json({
+    message: "Not found",
+  });
 });
 
 app.use((err, _, res, __) => {
-  res.status(500).json({ message: err.message.red });
+  res.status(500).json({
+    message: err.message,
+  });
 });
 
 module.exports = app;
