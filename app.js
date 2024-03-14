@@ -7,13 +7,13 @@ const authRouter = require("./routes/api/authRouter");
 const transactionsRouter = require("./routes/api/transactions");
 const categoriesRouter = require("./routes/api/transactionCategories");
 
-app.get("/", (_, res) => {
-  res.send("Server running on Heroku page :)");
-});
-
 const app = express();
 
 const formatsLogger = app.get("env") === "development" ? "dev" : "short";
+
+app.get("/", (_, res) => {
+  res.send("Server running on Heroku page :)");
+});
 
 app.use(logger(formatsLogger));
 app.use(cors());
