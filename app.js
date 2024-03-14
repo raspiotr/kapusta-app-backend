@@ -1,11 +1,12 @@
 const cors = require("cors");
 const express = require("express");
 const logger = require("morgan");
-
+require("dotenv").config();
+  
+const authRouter = require("./routes/api/authRouter");
 const transactionsRouter = require("./routes/api/transactions");
 const categoriesRouter = require("./routes/api/transactionCategories");
 
-require("dotenv").config();
 
 const app = express();
 
@@ -18,6 +19,8 @@ app.use(express.static("public"));
 
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/categories", categoriesRouter);
+app.use("/api/auth", authRouter);
+
 
 app.use((_, res, __) => {
   res.status(404).json({
