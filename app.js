@@ -3,6 +3,7 @@ const express = require("express");
 const logger = require("morgan");
 
 const transactionsRouter = require("./routes/api/transactions");
+const categoriesRouter = require("./routes/api/transactionCategories");
 
 require("dotenv").config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 app.use("/api/transactions", transactionsRouter);
+app.use("/api/categories", categoriesRouter);
 
 app.use((_, res, __) => {
   res.status(404).json({
