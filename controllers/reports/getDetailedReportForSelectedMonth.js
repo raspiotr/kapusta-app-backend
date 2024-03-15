@@ -9,15 +9,37 @@ const getDetailedReportForSelectedMonth = async (req, res) => {
     transactionType,
   });
 
-  // Trzeba dopisać funkcjonalność, która pozyska to co chcemy mieć w raporcie, czyli
-  // - wydatki / przychody z rozbiciem na kategorie
-  // - suma tych wydatków / przychodów
-  // Aktualnie jest realizowany wybór typu transakcji (przychody lub wydatki), wybór roku, wybór miesiąca
+ 
+  const summary = transactionsOfTypeSelectedMonth.reduce((acc, transaction) => {
+    const { category, description, amount } = transaction;
+
+    if (!acc[category]) {
+      acc[category] = { total: 0, descriptions: {} };
+    }
+    if (!acc[category].descriptions[description]) {
+      acc[category].descriptions[description] = 0;
+    }
+
+    acc[category].total += amount;
+    acc[category].descriptions[description] += amount;
+
+    return acc;
+  }, {});
+
+  
+  const responseData = Object.entries(summary).map(([category, data]) => ({
+    category,
+    total: data.total,
+    descriptions: Object.entries(data.descriptions).map(([description, sum]) => ({
+      description,
+      sum
+    }))
+  }));
 
   res.status(200).json({
     status: "success",
     code: 200,
-    data: transactionsOfTypeSelectedMonth,
+    data: responseData,
   });
 };
 

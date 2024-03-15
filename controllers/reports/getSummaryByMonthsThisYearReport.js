@@ -5,20 +5,51 @@ const getSummaryByMonthsThisYearReport = async (req, res) => {
 
   const thisYear = new Date().getFullYear();
 
-  const transactionsOfTypeThisYear = await Transaction.find({
-    year: thisYear,
-    transactionType,
-  });
 
-  // Trzeba dopisać funkcjonalność, która pozyska to co chcemy mieć w raporcie,
-  // czyli suma wydatków / dochodów w poszczególne miesiące obecnego roku
-  // Aktualnie jest realizowany wybór typu transakcji (przychody lub wydatki) i obecnego roku
+  try {
+    const monthlySummary = await Transaction.aggregate([
+      {
+        $match: {
+          year: thisYear,
+          transactionType,
+        },
+      },
+      {
+        $group: {
+          _id: "$month", 
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
 
-  res.status(200).json({
-    status: "success",
-    code: 200,
-    data: transactionsOfTypeThisYear,
-  });
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    
+    const formattedSummary = monthlySummary.map(item => ({
+      month: monthNames[item._id - 1],
+      total: item.total,
+    }));
+
+    res.status(200).json({
+      status: "success",
+      code: 200,
+      data: formattedSummary,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      code: 500,
+      message: "Server Error",
+      details: error.message,
+    });
+  }
 };
 
 module.exports = getSummaryByMonthsThisYearReport;
