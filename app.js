@@ -7,6 +7,7 @@ const authRouter = require("./routes/api/authRouter");
 const transactionsRouter = require("./routes/api/transactions");
 const categoriesRouter = require("./routes/api/transactionCategories");
 const reportsRouter = require("./routes/api/reports");
+const userRouter = require("./routes/api/user");
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/transactions", transactionsRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/reports", reportsRouter);
+app.use("/api/user", userRouter);
 
 app.use((_, res, __) => {
   res.status(404).json({
