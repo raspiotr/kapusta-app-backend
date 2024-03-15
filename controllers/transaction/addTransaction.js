@@ -3,7 +3,14 @@ const { User } = require("../../models/user");
 const updateBalanceAfterNewTransaction = require("../../helpers/updateBalanceAfterNewTransaction");
 
 const addTransaction = async (req, res) => {
-  const { transactionType } = req.params;
+  const transactionType = req.params.transactionType.toLowerCase();
+
+  if (transactionType !== "income" && transactionType !== "expense") {
+    return res.status(400).json({
+      message: "Transaction type must be 'income' or 'expense'.",
+    });
+  }
+
   const { day, month, year, description, category, amount } = req.body;
   const newTransaction = {
     transactionType,
