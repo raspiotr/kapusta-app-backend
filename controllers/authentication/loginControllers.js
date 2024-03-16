@@ -16,6 +16,9 @@ const loginUser = async (req, res) => {
 
   const { email, password } = req.body;
 
+  
+  // TU NIZEJ BYŁY JAKIES KONFLIKTY WIĘC SPRAWDZCIE CZY JEST OK
+  
   let user;
   try {
     user = await User.findOne({ email });
@@ -46,7 +49,14 @@ const loginUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-module.exports = {
-  loginUser,
+    
+const logoutUser = async (req, res) => {
+  // kod usuwający token z lokalnego storage'u 
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logged out successfully" });
 };
+
+    module.exports = {
+      loginUser,
+      logoutUser,
+    };
