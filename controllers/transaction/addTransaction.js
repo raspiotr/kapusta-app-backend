@@ -14,7 +14,7 @@ const addTransaction = async (req, res) => {
     });
   }
 
-  const { day, month, year, description, category, amount } = req.body;
+  const { amount } = req.body;
 
   const newBalance = updateBalanceAfterNewTransaction(
     transactionType,
