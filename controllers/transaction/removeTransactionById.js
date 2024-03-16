@@ -25,7 +25,7 @@ const removeTransactionById = async (req, res) => {
       .json({ message: `Not found transaction with ID = ${transactionId}` });
   }
 
-  const transactionOwner = selectedTransaction.owner || null;
+  const transactionOwner = selectedTransaction.owner || "";
 
   if (owner.toString() !== transactionOwner.toString()) {
     return res

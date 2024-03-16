@@ -15,11 +15,6 @@ const addTransaction = async (req, res) => {
   }
 
   const { day, month, year, description, category, amount } = req.body;
-  const newTransaction = {
-    transactionType,
-    ...req.body,
-    owner,
-  };
 
   const newBalance = updateBalanceAfterNewTransaction(
     transactionType,
@@ -36,20 +31,27 @@ const addTransaction = async (req, res) => {
   await User.findByIdAndUpdate(owner, {
     balance: newBalance,
   });
-  await Transaction.create(newTransaction);
+
+  const newTransaction = new Transaction({
+    transactionType,
+    ...req.body,
+    owner,
+  });
+  await newTransaction.save();
 
   res.status(201).json({
     status: "success",
     code: 201,
     data: {
       transaction: {
+        _id: newTransaction._id,
         transactionType,
-        day,
-        month,
-        year,
-        description,
-        category,
-        amount,
+        day: newTransaction.day,
+        month: newTransaction.month,
+        year: newTransaction.year,
+        description: newTransaction.description,
+        category: newTransaction.category,
+        amount: newTransaction.amount,
       },
     },
   });

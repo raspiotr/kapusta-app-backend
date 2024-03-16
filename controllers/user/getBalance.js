@@ -1,8 +1,7 @@
 const { User } = require("../../models/user");
 
 const getBalance = async (req, res) => {
-  //Aktualnie wstawiamy na sztywno ID użytkownika
-  const _id = "65f2e3e83c3bd948dae62781";
+  const { _id } = req.user;
 
   const { balance } = await User.findById(_id);
   res.status(200).json({
