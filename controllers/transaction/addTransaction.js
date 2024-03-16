@@ -3,6 +3,9 @@ const { User } = require("../../models/user");
 const updateBalanceAfterNewTransaction = require("../../helpers/updateBalanceAfterNewTransaction");
 
 const addTransaction = async (req, res) => {
+  const owner = req.user._id;
+  const { balance } = req.user;
+
   const transactionType = req.params.transactionType.toLowerCase();
 
   if (transactionType !== "income" && transactionType !== "expense") {
@@ -15,11 +18,9 @@ const addTransaction = async (req, res) => {
   const newTransaction = {
     transactionType,
     ...req.body,
+    owner,
   };
 
-  //Aktualnie wstawiamy na sztywno ID użytkownika
-  const _id = "65f2e3e83c3bd948dae62781";
-  const { balance } = await User.findById(_id);
   const newBalance = updateBalanceAfterNewTransaction(
     transactionType,
     balance,
@@ -32,7 +33,7 @@ const addTransaction = async (req, res) => {
       .json({ message: "The balance must not be less than 0." });
   }
 
-  await User.findByIdAndUpdate(_id, {
+  await User.findByIdAndUpdate(owner, {
     balance: newBalance,
   });
   await Transaction.create(newTransaction);
