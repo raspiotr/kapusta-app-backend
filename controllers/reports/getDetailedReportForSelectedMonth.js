@@ -1,7 +1,13 @@
 const { Transaction } = require("../../models/transaction");
 
 const getDetailedReportForSelectedMonth = async (req, res) => {
-  const { transactionType, year, month } = req.params;
+  const transactionType = req.params.transactionType.toLowerCase();
+  const { year, month } = req.params;
+    if (transactionType !== "income" && transactionType !== "expense") {
+      return res.status(404).json({
+        message: "Transaction type must be 'income' or 'expense'.",
+      });
+    }
 
   const transactionsOfTypeSelectedMonth = await Transaction.find({
     year,
