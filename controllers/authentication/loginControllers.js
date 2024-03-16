@@ -34,8 +34,15 @@ const generateAuthToken = (userId) => {
         console.error(error);
         res.status(500).json({ message: "Server error" });
     }
-    };
+};
+    
+const logoutUser = async (req, res) => {
+  // kod usuwający token z lokalnego storage'u 
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logged out successfully" });
+};
 
     module.exports = {
-    loginUser,
-};
+      loginUser,
+      logoutUser,
+    };
