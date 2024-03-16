@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const Joi = require("joi");
 
 const userSchema = Schema(
   {
@@ -41,4 +42,10 @@ const userSchema = Schema(
 
 const User = model("user", userSchema);
 
-module.exports = { User };
+const updateBalanceSchema = Joi.object({
+  balance: Joi.number().required().min(0).messages({
+    "any.required": '"Balance" is required and must be a positive number.',
+  }),
+});
+
+module.exports = { User, updateBalanceSchema };
