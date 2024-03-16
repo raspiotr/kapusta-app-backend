@@ -8,6 +8,7 @@ const transactionsRouter = require("./routes/api/transactions");
 const categoriesRouter = require("./routes/api/transactionCategories");
 const reportsRouter = require("./routes/api/reports");
 const userRouter = require("./routes/api/user");
+const authenticateToken = require("./middlewares/authenticateToken");
 
 const app = express();
 
@@ -22,11 +23,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-app.use("/api/transactions", transactionsRouter);
-app.use("/api/categories", categoriesRouter);
+app.use("/api/transactions", authenticateToken, transactionsRouter);
+app.use("/api/categories", authenticateToken, categoriesRouter);
 app.use("/api/auth", authRouter);
-app.use("/api/reports", reportsRouter);
-app.use("/api/user", userRouter);
+app.use("/api/reports", authenticateToken, reportsRouter);
+app.use("/api/user", authenticateToken, userRouter);
 
 app.use((_, res, __) => {
   res.status(404).json({
