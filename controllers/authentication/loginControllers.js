@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const { User } = require("../../models/user");
 
+
 const generateAuthToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -51,12 +52,25 @@ const loginUser = async (req, res) => {
 };
     
 const logoutUser = async (req, res) => {
-  // kod usuwający token z lokalnego storage'u 
-  res.clearCookie("token");
-  res.status(200).json({ message: "Logged out successfully" });
+  try {
+    // tu jest pobranie ID użytkownika z żądania , ale to może być przekazane przez middleware 
+    const userId = req.user._id;
+
+    // aktualizacja tokena użytkownika na pusty string w bazie danych
+    await User.findByIdAndUpdate(userId, { token: "" });
+
+    // usunięcie tokena z lokalnego storage, czyli to co już było
+    res.clearCookie("token");
+
+    // wysłanie info o pomyślnym wylogowaniu
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-    module.exports = {
-      loginUser,
-      logoutUser,
+        module.exports = {
+        loginUser,
+        logoutUser,
     };
