@@ -44,7 +44,7 @@ const User = model("user", userSchema);
 
 const updateBalanceSchema = Joi.object({
   balance: Joi.number().required().min(0).messages({
-    "any.required": '"Balance" is required and must be a positive number.',
+    "any.required": "'Balance' is required and must be a positive number.",
   }),
 });
 

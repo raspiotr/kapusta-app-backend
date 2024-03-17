@@ -4,6 +4,8 @@ const { isValidObjectId } = require("mongoose");
 const updateBalanceAfterDeleteTransaction = require("../../helpers/updateBalanceAfterDeleteTransaction");
 
 const removeTransactionById = async (req, res) => {
+  const owner = req.user._id;
+  const { balance } = req.user;
   const { transactionId } = req.params;
 
   if (!isValidObjectId(transactionId)) {
@@ -23,11 +25,16 @@ const removeTransactionById = async (req, res) => {
       .json({ message: `Not found transaction with ID = ${transactionId}` });
   }
 
+  const transactionOwner = selectedTransaction.owner || "";
+
+  if (owner.toString() !== transactionOwner.toString()) {
+    return res
+      .status(401)
+      .json({ message: "Not authorized. It is not your transaction!" });
+  }
+
   const { amount, transactionType } = selectedTransaction;
 
-  //Aktualnie wstawiamy na sztywno ID użytkownika
-  const _id = "65f2e3e83c3bd948dae62781";
-  const { balance } = await User.findById(_id);
   const newBalance = updateBalanceAfterDeleteTransaction(
     transactionType,
     balance,
@@ -40,7 +47,7 @@ const removeTransactionById = async (req, res) => {
       .json({ message: "The balance must not be less than 0." });
   }
 
-  await User.findByIdAndUpdate(_id, {
+  await User.findByIdAndUpdate(owner, {
     balance: newBalance,
   });
   await Transaction.findByIdAndDelete({

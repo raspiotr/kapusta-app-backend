@@ -1,6 +1,7 @@
 const { Transaction } = require("../../models/transaction");
 
 const getAllTransactionsOfType = async (req, res) => {
+  const { _id } = req.user;
   const transactionType = req.params.transactionType.toLowerCase();
 
   if (transactionType !== "income" && transactionType !== "expense") {
@@ -9,7 +10,10 @@ const getAllTransactionsOfType = async (req, res) => {
     });
   }
 
-  const transactionsOfTypeList = await Transaction.find({ transactionType });
+  const transactionsOfTypeList = await Transaction.find({
+    transactionType,
+    owner: _id,
+  });
 
   res.status(200).json({
     status: "success",
