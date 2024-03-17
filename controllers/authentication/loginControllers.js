@@ -56,7 +56,7 @@ const logoutUser = async (req, res) => {
   }
 };
 
-        module.exports = {
-        loginUser,
-        logoutUser,
-    };
+module.exports = {
+    loginUser,
+    logoutUser,
+};

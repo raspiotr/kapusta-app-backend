@@ -1,7 +1,8 @@
 const express = require("express");
 const { check } = require("express-validator");
+const passport = require("passport");
 const {registerUser,} = require("../../controllers/authentication/registerControllers");
-const { loginUser, } = require("../../controllers/authentication/loginControllers");
+const { loginUser } = require("../../controllers/authentication/loginControllers");
 const authenticateToken = require("../../middlewares/authenticateToken");
 
 const router = express.Router();
@@ -24,5 +25,22 @@ router.post("/register", validateRegister, registerUser);
 
 // endpoint logowania 
 router.post("/login", validateLogin, authenticateToken, loginUser);
+
+// endpoint logowania za pomocą konta Google
+router.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
+
+// callback endpoint dla uwierzytelnienia Google
+router.get("/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  function (req, res) {
+    // przekierowanie na stronę główną po udanym uwierzytelnieniu (ale można dodać po  " / " dalszy ciąg)
+    res.redirect("/");
+  }
+);
+
+// Przykładowa chroniona ścieżka, dostępna tylko dla uwierzytelnionych użytkowników
+router.get("/protected", authenticateToken, (req, res) => {
+  res.send("This path is only accessible to logged-in users.");
+});
 
 module.exports = router;

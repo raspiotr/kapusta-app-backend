@@ -1,6 +1,10 @@
 const cors = require("cors");
 const express = require("express");
 const logger = require("morgan");
+const passport = require("passport");
+const session = require("express-session");
+
+const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
 require("dotenv").config();
 
 const authRouter = require("./routes/api/authRouter");
@@ -22,6 +26,58 @@ app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
+
+// Konfiguracja sesji
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+// Inicjalizacja sesji Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Serializacja i deserializacja użytkownika
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((obj, done) => {
+  done(null, obj);
+});
+
+// konfiguracja logowania przez Google
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:3000/auth/google/callback",
+    },
+    (accessToken, refreshToken, profile, done) => {
+      // dane profilu użytkownika:
+      return done(null, profile);
+    }
+  )
+);
+
+// routing dla logowania przez google
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["email", "profile"] })
+);
+
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    // przekierowanie na stronę główną  - po udanym uwierzytelnieniu
+    res.redirect("/");
+  }
+);
 
 app.use("/api/transactions", authenticateToken, transactionsRouter);
 app.use("/api/categories", authenticateToken, categoriesRouter);
