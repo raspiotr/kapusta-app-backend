@@ -9,6 +9,7 @@ const {
   logoutUser,
 } = require("../../controllers/authentication/loginControllers");
 const authenticateToken = require("../../middlewares/authenticateToken");
+const currentUser = require("../../controllers/authentication/current");
 
 const router = express.Router();
 
@@ -36,6 +37,9 @@ router.post("/login", validateLogin, loginUser);
 
 // endpoint wylogowania
 router.post("/logout", authenticateToken, logoutUser);
+
+// pobranie info o aktualnie zalogowanym użytkowniku
+router.get("/current", authenticateToken, currentUser);
 
 // endpoint logowania za pomocą konta Google
 // router.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
