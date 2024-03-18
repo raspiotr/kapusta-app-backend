@@ -1,42 +1,53 @@
 const express = require("express");
 const { check } = require("express-validator");
 const passport = require("passport");
-const {registerUser,} = require("../../controllers/authentication/registerControllers");
-const { loginUser } = require("../../controllers/authentication/loginControllers");
+const {
+  registerUser,
+} = require("../../controllers/authentication/registerControllers");
+const {
+  loginUser,
+  logoutUser,
+} = require("../../controllers/authentication/loginControllers");
 const authenticateToken = require("../../middlewares/authenticateToken");
 
 const router = express.Router();
 
-// walidacja danych rejestracji 
+// walidacja danych rejestracji
 const validateRegister = [
   check("name", "Name is required").notEmpty(),
   check("email", "Please include a valid email").isEmail(),
-  check("password", "Please enter a password with 5 or more characters").isLength({ min: 5 }),
+  check(
+    "password",
+    "Please enter a password with 5 or more characters"
+  ).isLength({ min: 5 }),
 ];
 
-// walidacja danych logowania 
+// walidacja danych logowania
 const validateLogin = [
   check("email", "Please include a valid email").isEmail(),
   check("password", "Password is required").notEmpty(),
 ];
 
-// endpoint rejestracji 
+// endpoint rejestracji
 router.post("/register", validateRegister, registerUser);
 
-// endpoint logowania 
-router.post("/login", validateLogin, authenticateToken, loginUser);
+// endpoint logowania
+router.post("/login", validateLogin, loginUser);
+
+// endpoint wylogowania
+router.post("/logout", authenticateToken, logoutUser);
 
 // endpoint logowania za pomocą konta Google
-router.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
+// router.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
 
 // callback endpoint dla uwierzytelnienia Google
-router.get("/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  function (req, res) {
-    // przekierowanie na stronę główną po udanym uwierzytelnieniu (ale można dodać po  " / " dalszy ciąg)
-    res.redirect("/");
-  }
-);
+// router.get("/auth/google/callback",
+//   passport.authenticate("google", { failureRedirect: "/login" }),
+//   function (req, res) {
+//     // przekierowanie na stronę główną po udanym uwierzytelnieniu (ale można dodać po  " / " dalszy ciąg)
+//     res.redirect("/");
+//   }
+// );
 
 // Przykładowa chroniona ścieżka, dostępna tylko dla uwierzytelnionych użytkowników
 router.get("/protected", authenticateToken, (req, res) => {
