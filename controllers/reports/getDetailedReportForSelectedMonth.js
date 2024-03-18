@@ -1,25 +1,30 @@
 const { Transaction } = require("../../models/transaction");
 
 const getDetailedReportForSelectedMonth = async (req, res) => {
+  const owner = req.user._id;
+
   const transactionType = req.params.transactionType.toLowerCase();
   const { year, month } = req.params;
 
-    if (transactionType !== "income" && transactionType !== "expense") {
-      return res.status(404).json({
-        message: "Transaction type must be 'income' or 'expense'.",
-      });
-    }
+  if (transactionType !== "income" && transactionType !== "expense") {
+    return res.status(404).json({
+      message: "Transaction type must be 'income' or 'expense'.",
+    });
+  }
 
   const transactionsOfTypeSelectedMonth = await Transaction.find({
     year,
     month,
     transactionType,
+    owner,
   });
 
-  const filteredTransactions = transactionsOfTypeSelectedMonth.filter(transaction => transaction.transactionType === transactionType);
- 
+  const filteredTransactions = transactionsOfTypeSelectedMonth.filter(
+    (transaction) => transaction.transactionType === transactionType
+  );
+
   let total = 0;
-  
+
   const summary = filteredTransactions.reduce((acc, transaction) => {
     const { category, description, amount } = transaction;
 
@@ -40,17 +45,21 @@ const getDetailedReportForSelectedMonth = async (req, res) => {
     return acc;
   }, {});
 
-  
   const responseData = Object.entries(summary).map(([category, data]) => ({
     category,
     total: data.total,
-    descriptions: Object.entries(data.descriptions).map(([description, sum]) => ({
-      description,
-      sum
-    }))
+    descriptions: Object.entries(data.descriptions).map(
+      ([description, sum]) => ({
+        description,
+        sum,
+      })
+    ),
   }));
 
-  const totalResponse = transactionType === 'income' ? { totalIncome: total } : { totalExpense: total };
+  const totalResponse =
+    transactionType === "income"
+      ? { totalIncome: total }
+      : { totalExpense: total };
 
   res.status(200).json({
     status: "success",

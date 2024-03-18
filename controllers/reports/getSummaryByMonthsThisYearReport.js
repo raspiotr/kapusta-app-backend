@@ -1,6 +1,8 @@
 const { Transaction } = require("../../models/transaction");
 
 const getSummaryByMonthsThisYearReport = async (req, res) => {
+  const owner = req.user._id;
+
   const transactionType = req.params.transactionType.toLowerCase();
   if (transactionType !== "income" && transactionType !== "expense") {
     return res.status(404).json({
@@ -10,18 +12,18 @@ const getSummaryByMonthsThisYearReport = async (req, res) => {
 
   const thisYear = new Date().getFullYear();
 
-
   try {
     const monthlySummary = await Transaction.aggregate([
       {
         $match: {
           year: thisYear,
           transactionType,
+          owner,
         },
       },
       {
         $group: {
-          _id: "$month", 
+          _id: "$month",
           total: { $sum: "$amount" },
         },
       },
@@ -31,12 +33,21 @@ const getSummaryByMonthsThisYearReport = async (req, res) => {
     ]);
 
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
 
-    
-    const formattedSummary = monthlySummary.map(item => ({
+    const formattedSummary = monthlySummary.map((item) => ({
       month: monthNames[item._id - 1],
       total: item.total,
     }));
@@ -46,7 +57,6 @@ const getSummaryByMonthsThisYearReport = async (req, res) => {
       code: 200,
       data: formattedSummary,
     });
-
   } catch (error) {
     res.status(500).json({
       status: "error",

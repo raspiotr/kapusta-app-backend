@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const { User } = require("../../models/user");
 
-
 const generateAuthToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -17,9 +16,6 @@ const loginUser = async (req, res) => {
 
   const { email, password } = req.body;
 
-  
-  // TU NIZEJ BYŁY JAKIES KONFLIKTY WIĘC SPRAWDZCIE CZY JEST OK
-  
   let user;
   try {
     user = await User.findOne({ email });
@@ -50,16 +46,16 @@ const loginUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-    
+
 const logoutUser = async (req, res) => {
   try {
-    // tu jest pobranie ID użytkownika z żądania , ale to może być przekazane przez middleware 
+    // tu jest pobranie ID użytkownika
     const userId = req.user._id;
 
     // aktualizacja tokena użytkownika na pusty string w bazie danych
     await User.findByIdAndUpdate(userId, { token: "" });
 
-    // usunięcie tokena z lokalnego storage, czyli to co już było
+    // usunięcie tokena z lokalnego storage
     res.clearCookie("token");
 
     // wysłanie info o pomyślnym wylogowaniu
@@ -71,6 +67,6 @@ const logoutUser = async (req, res) => {
 };
 
 module.exports = {
-    loginUser,
-    logoutUser,
+  loginUser,
+  logoutUser,
 };
