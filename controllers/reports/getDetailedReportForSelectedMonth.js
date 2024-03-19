@@ -1,4 +1,5 @@
 const { Transaction } = require("../../models/transaction");
+const { TransactionCategory } = require("../../models/transactionCategories");
 
 const getDetailedReportForSelectedMonth = async (req, res) => {
   const owner = req.user._id;
@@ -56,15 +57,28 @@ const getDetailedReportForSelectedMonth = async (req, res) => {
     ),
   }));
 
+  const transactionCategories = await TransactionCategory.find();
+
+  const responseDataWithImgs = responseData.map((categoryData) => {
+    const category = transactionCategories.find(
+      (c) =>
+        c.categoryName.toLowerCase() === categoryData.category.toLowerCase()
+    );
+    return {
+      categoryImageUrl: category.categoryImageUrl,
+      ...categoryData,
+    };
+  });
+
   const totalResponse =
     transactionType === "income"
-      ? { totalIncome: total }
-      : { totalExpense: total };
+      ? { totalIncome: Number(total.toFixed(2)) }
+      : { totalExpense: Number(total.toFixed(2)) };
 
   res.status(200).json({
     status: "success",
     code: 200,
-    data: responseData,
+    data: responseDataWithImgs,
     ...totalResponse,
   });
 };
