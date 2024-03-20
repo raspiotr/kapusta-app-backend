@@ -1,60 +1,74 @@
 // plik konfiguracji "strategii" Passport.js
-
+const bcrypt = require("bcrypt");
 require("dotenv").config();
-const passport = require("passport");
+const jwt = require("jsonwebtoken");
 const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
-const User = require("../models/user");
+const { User } = require("../models/user");
 
-passport.use(
+const generateAuthToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
+
+module.exports = function (passport) {
+  passport.use(
     new GoogleStrategy(
-        {
+      {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL,
-        },
-        async (accessToken, refreshToken, profile, done) => {
+        callbackURL: "/api/auth/google/callback",
+      },
+      async (_, __, profile, done) => {
         try {
-            // sprawdzenie czy użytkownik już istnieje w bazie danych  - po mailu
-            let user = await User.findOne({ email: profile.email });
-
-            if (user) {
+          //console.log(profile);
+          // sprawdzenie czy użytkownik już istnieje w bazie danych  - po mailu
+          let user = await User.findOne({ email: profile._json.email });
+          if (user) {
+            const token = generateAuthToken(user._id);
+            user.token = token;
+            await User.findByIdAndUpdate(user._id, { token });
             // jak istnieje to zwracamy jego dane:
             return done(null, user);
-            } else {
+          } else {
             // jak nie istnieje to  rejestracja :
-            user = new User({
-                name: profile.displayName,
-                email: profile.email,
-                //ewent. można dodać jeszcze jakieś potrzebne informacje
+            const hashedPassword = await bcrypt.hash(profile._json.sub, 10);
+            const balance = 0;
+
+            const newUser = new User({
+              name: profile._json.name,
+              email: profile._json.email,
+              password: hashedPassword,
+              balance,
+              avatarUrl: profile._json.picture,
             });
 
-// zapis nowego użytkownika do bazy:
-            await user.save();
+            const token = generateAuthToken(newUser._id);
+            newUser.token = token;
 
-// nowy użytkownik jest zwracany:
+            await newUser.save();
+            // nowy użytkownik jest zwracany:
+            user = newUser;
             return done(null, user);
-            }
+          }
         } catch (error) {
-            return done(error);
+          return done(error);
         }
-        }
+      }
     )
-);
+  );
 
-// serializacja użytkownika                    - mechanizm utrzymujący id użykownika pomiędzy zapytaniami http (!)
-passport.serializeUser((user, done) => {
+  // serializacja użytkownika
+  passport.serializeUser((user, done) => {
     done(null, user.id);
-});
+  });
 
-// deserializacja użytkownika
-passport.deserializeUser(async (id, done) => {
+  // deserializacja użytkownika
+  passport.deserializeUser(async (id, done) => {
     try {
-        // wysz. usera w bazie po jego id
-        const user = await User.findById(id);
-        done(null, user);
+      // wysz. usera w bazie po jego id
+      const user = await User.findById(id);
+      done(null, user);
     } catch (error) {
-        done(error);
+      done(error);
     }
-});
-
-module.exports = passport;
+  });
+};

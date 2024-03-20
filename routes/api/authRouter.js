@@ -10,6 +10,7 @@ const {
 } = require("../../controllers/authentication/loginControllers");
 const authenticateToken = require("../../middlewares/authenticateToken");
 const currentUser = require("../../controllers/authentication/current");
+const googleAuth = require("../../controllers/authentication/googleAuth");
 
 const router = express.Router();
 
@@ -42,16 +43,17 @@ router.post("/logout", authenticateToken, logoutUser);
 router.get("/current", authenticateToken, currentUser);
 
 // endpoint logowania za pomocą konta Google
-// router.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["email", "profile"] })
+);
 
 // callback endpoint dla uwierzytelnienia Google
-// router.get("/auth/google/callback",
-//   passport.authenticate("google", { failureRedirect: "/login" }),
-//   function (req, res) {
-//     // przekierowanie na stronę główną po udanym uwierzytelnieniu (ale można dodać po  " / " dalszy ciąg)
-//     res.redirect("/");
-//   }
-// );
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  googleAuth
+);
 
 // Przykładowa chroniona ścieżka, dostępna tylko dla uwierzytelnionych użytkowników
 router.get("/protected", authenticateToken, (req, res) => {
