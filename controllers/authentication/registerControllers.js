@@ -29,8 +29,8 @@ const registerUser = async (req, res) => {
 
     const avatarUrl = gravatar.url(name, {
       protocol: "https",
-      s: "250",
-      default: "retro",
+      s: "100",
+      default: "robohash",
     });
 
     const hashedPassword = await bcrypt.hash(password, 10);
