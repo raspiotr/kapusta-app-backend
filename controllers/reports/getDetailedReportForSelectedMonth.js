@@ -78,8 +78,8 @@ const getDetailedReportForSelectedMonth = async (req, res) => {
   res.status(200).json({
     status: "success",
     code: 200,
-    data: responseDataWithImgs,
     ...totalResponse,
+    data: responseDataWithImgs,
   });
 };
 
