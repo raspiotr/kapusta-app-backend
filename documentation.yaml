@@ -1,0 +1,603 @@
+openapi: 3.0.0
+info:
+  title: Financial Management API
+  description: API to manage personal financial transactions and categories.
+  version: "1.0.0"
+servers:
+  - url: 'http://localhost:3000/api'
+    description: Development server
+paths:
+  /transactions/{transactionId}:
+    delete:
+      summary: Deletes a specific transaction by its ID.
+      tags:
+        - Transactions
+      parameters:
+        - in: path
+          name: transactionId
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the transaction.
+      responses:
+        '200':
+          description: Transaction deleted successfully.
+        '404':
+          description: Transaction not found.
+        '401':
+          description: Unauthorized to delete the transaction.
+      security:
+        - bearerAuth: []
+
+  /transactions:
+    post:
+      summary: Adds a new transaction.
+      tags:
+        - Transactions
+      description: Allows authenticated users to add a new financial transaction (either income or expense).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionInput'
+      responses:
+        '201':
+          description: Transaction successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Bad request, possibly due to missing required fields or invalid data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized, token missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Retrieves a list of transactions for the user.
+      tags:
+        - Transactions
+      responses:
+        '200':
+          description: A list of transactions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Unauthorized access.
+      security:
+        - bearerAuth: []
+        
+  /auth/current:
+    get:
+      summary: Retrieves the current authenticated user's information.
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Information about the current user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized access, invalid or expired token.
+      security:
+        - bearerAuth: []
+        
+        
+  /auth/google:
+    get:
+      summary: Redirects to Google Authentication
+      tags:
+        - Authentication
+      description: Redirects the user to Google for OAuth2.0 authentication.
+      responses:
+        '302':
+          description: User is redirected to Google's OAuth 2.0 login dialog.
+
+  /auth/google/callback:
+    get:
+      summary: Google OAuth2.0 callback endpoint.
+      tags:
+        - Authentication
+      description: This endpoint handles the response from Google after the user authenticates. It will process the authorization code provided by Google and exchange it for an access token.
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+          required: true
+          description: The authorization code returned by Google after user consent.
+        - in: query
+          name: error
+          schema:
+            type: string
+          description: An error message returned by Google if the authentication failed.
+      responses:
+        '200':
+          description: Authentication successful, user information and JWT returned or user redirected to the frontend application with the token included.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    format: jwt
+                    description: JWT token for the authenticated user.
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Authentication failed or was cancelled by the user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'    
+                
+  /auth/login:
+    post:
+      summary: Authenticates a user and provides a JWT for access to protected endpoints.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email address associated with the user's account.
+                password:
+                  type: string
+                  format: password
+                  description: The password associated with the user's account.
+      responses:
+        '200':
+          description: Authentication successful, user is logged in.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    format: jwt
+                    description: A JWT that can be used for accessing protected routes.
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Authentication failed, invalid email or password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/logout:
+    post:
+      summary: Logs out the user.
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: The user has been successfully logged out.
+        '500':
+          description: Server error occurred.
+      security:
+        - bearerAuth: []
+
+                
+  /auth/register:
+    post:
+      summary: Registers a new user account.
+      tags:
+        - Authentication
+      description: Endpoint for user registration. Creates a new user with the provided details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                email:
+                  type: string
+                  format: email
+                  example: "john.doe@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "password123"
+      responses:
+        '201':
+          description: User successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request, possibly due to missing or invalid parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict, for example if the user already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /reports/:transactionType/:{year}/:{month}:
+    get:
+      summary: Retrieves a detailed report for a selected month.
+      tags:
+        - Reports
+      description: Provides a detailed financial report for the given year and month for the authenticated user.
+      parameters:
+        - in: path
+          name: year
+          required: true
+          schema:
+            type: integer
+            minimum: 2000
+            maximum: 3000
+          description: The year for which the detailed report is requested.
+        - in: path
+          name: month
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: The month for which the detailed report is requested.
+      responses:
+        '200':
+          description: Detailed report data for the selected month.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyDetailedReport'
+        '400':
+          description: Invalid parameters for year or month.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized access.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+        
+  /reports/:transactionType:
+    get:
+      summary: Retrieves a summary of transactions by month for the current year.
+      tags:
+        - Reports
+      description: Provides a summary of income and expenses for each month of the current year for the authenticated user.
+      responses:
+        '200':
+          description: Monthly summary of transactions for the current year.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MonthlySummary'
+        '401':
+          description: Unauthorized access, invalid or expired token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+      
+  /transactions/{transactionType}:
+    get:
+      summary: Retrieves all transactions of a specific type for the authenticated user.
+      tags:
+        - Transactions
+      description: Fetches a list of transactions filtered by type (e.g., income or expense) for the user that is currently logged in.
+      parameters:
+        - in: path
+          name: transactionType
+          required: true
+          schema:
+            type: string
+            enum: [income, expense]
+          description: The type of transactions to retrieve.
+      responses:
+        '200':
+          description: A list of transactions of the specified type for the current user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Bad request, possibly due to invalid transaction type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized access, the user is not logged in or the token is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /categories:
+    post:
+      summary: Adds a new transaction category.
+      tags:
+        - Transaction Categories
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCategoryInput'
+      responses:
+        '201':
+          description: Transaction category successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionCategory'
+        '400':
+          description: Bad request, possibly due to missing required fields or invalid data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized, token missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Retrieves all transaction categories.
+      tags:
+        - Transaction Categories
+      responses:
+        '200':
+          description: A list of transaction categories.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionCategory'
+        '401':
+          description: Unauthorized access.
+      security:
+        - bearerAuth: []
+  /balance:
+    get:
+      summary: Retrieves the balance of the user's account.
+      tags:
+        - User
+      responses:
+        '200':
+          description: The balance of the user's account.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+                    format: float
+                    description: The current balance of the user's account.
+        '401':
+          description: Unauthorized access.
+      security:
+        - bearerAuth: []
+    patch:
+      summary: Updates the balance of the user's account.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                balance:
+                  type: number
+                  format: float
+                  description: The new balance value to be set for the user's account.
+      responses:
+        '200':
+          description: The balance of the user's account has been successfully updated.
+        '400':
+          description: Bad request, possibly due to missing required fields or invalid data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized access.
+      security:
+        - bearerAuth: []
+
+
+components:
+  schemas:
+    Transaction:
+      type: object
+      required:
+        - id
+        - amount
+        - date
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        date:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [income, expense]
+        category:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the user.
+        name:
+          type: string
+          description: The user's full name.
+        email:
+          type: string
+          format: email
+          description: The user's email address.
+        balance:
+          type: number
+          format: float
+          description: The current balance of the user's account.
+        avatarUrl:
+          type: string
+          description: The URL to the user's avatar image.
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+          example: "Authentication failed."
+    MonthlyDetailedReport:
+      type: object
+      properties:
+        totalIncome:
+          type: number
+          format: float
+          description: Total income for the selected month.
+        totalExpense:
+          type: number
+          format: float
+          description: Total expenses for the selected month.
+    TransactionInput:
+      type: object
+      required:
+        - amount
+        - date
+        - type
+        - category
+      properties:
+        amount:
+          type: number
+          format: float
+          description: The amount of the transaction.
+        date:
+          type: string
+          format: date-time
+          description: The date of the transaction.
+        type:
+          type: string
+          enum: [income, expense]
+          description: The type of the transaction.
+        category:
+          type: string
+          description: The category of the transaction.    
+          
+    MonthlySummary:
+      type: object
+      properties:
+        month:
+          type: string
+          description: The name of the month.
+        totalIncome:
+          type: number
+          format: float
+          description: Total income for the month.
+        totalExpense:
+          type: number
+          format: float
+          description: Total expenses for the month.
+    TransactionCategoryInput:
+      type: object
+      required:
+        - categoryName
+      properties:
+        categoryName:
+          type: string
+          description: The name of the transaction category.
+          example: Food
+        categoryImageUrl:
+          type: string
+          description: The URL of the category image.
+          example: https://example.com/images/food.png
+
+    TransactionCategory:
+      type: object
+      required:
+        - id
+        - categoryName
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier of the transaction category.
+        categoryName:
+          type: string
+          description: The name of the transaction category.
+          example: Food
+        categoryImageUrl:
+          type: string
+          description: The URL of the category image.
+          example: https://example.com/images/food.png
+
+          
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
