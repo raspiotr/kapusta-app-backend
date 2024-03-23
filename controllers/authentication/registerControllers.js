@@ -22,6 +22,8 @@ const registerUser = async (req, res) => {
     existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
+        code: 11000,
+        status: 409,
         message:
           "A user with the provided email address is already registered.",
       });
