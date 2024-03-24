@@ -3,6 +3,10 @@ const express = require("express");
 const logger = require("morgan");
 const session = require("express-session");
 const passport = require("passport");
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const swaggerDocument = YAML.load('./openapi.yaml');
+
 
 const authRouter = require("./routes/api/authRouter");
 const transactionsRouter = require("./routes/api/transactions");
@@ -14,6 +18,10 @@ const authenticateToken = require("./middlewares/authenticateToken");
 require("./middlewares/passport-config")(passport);
 
 const app = express();
+
+
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 
