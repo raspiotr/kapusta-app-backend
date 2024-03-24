@@ -9,9 +9,8 @@ const googleAuth = async (req, res) => {
     });
   }
 
-  res.cookie("user", user);
   // przekierowanie na stronę pobrania danych użytkownika poprzez token
-  res.redirect(`${process.env.FRONTEND_URL}/user-check`);
+  res.redirect(`${process.env.FRONTEND_URL}/user-check?token=${user.token}`);
 };
 
 module.exports = googleAuth;
