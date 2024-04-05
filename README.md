@@ -1,4 +1,4 @@
-### KAPUSTA - Budget Management App (backend)
+### KAPUSTA - Budget Management App (backend: Node.js)
 
 ## Project Description:
 
