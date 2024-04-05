@@ -14,5 +14,5 @@
 10. **Implement the transaction deletion endpoint**
 11. **Implement the endpoint for retrieving a summary of months of the current year in relation to expenses**
 12. **Implement the endpoint for retrieving a summary of months of the current year in relation to income**
-13. **Implement the endpoint for retrieving detailed information (see mockup) about expenses and incomes for a specific month and year**
+13. **Implement the endpoint for retrieving detailed information about expenses and incomes for a specific month and year**
 14. **Create endpoint documentation (swagger-ui)**
